@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160229072181) do
+ActiveRecord::Schema.define(version: 20160311062123) do
 
   create_table "friendly_id_slugs", force: :cascade do |t|
     t.string   "slug",                      null: false
@@ -298,6 +298,16 @@ ActiveRecord::Schema.define(version: 20160229072181) do
 
   add_index "spree_orders_promotions", ["order_id", "promotion_id"], name: "index_spree_orders_promotions_on_order_id_and_promotion_id"
 
+  create_table "spree_orders_subscriptions", force: :cascade do |t|
+    t.integer  "subscription_id"
+    t.integer  "order_id"
+    t.datetime "failed_at"
+    t.text     "failure_reasons"
+  end
+
+  add_index "spree_orders_subscriptions", ["order_id"], name: "index_spree_orders_subscriptions_on_order_id"
+  add_index "spree_orders_subscriptions", ["subscription_id"], name: "index_spree_orders_subscriptions_on_subscription_id"
+
   create_table "spree_payment_capture_events", force: :cascade do |t|
     t.decimal  "amount",     precision: 10, scale: 2, default: 0.0
     t.integer  "payment_id"
@@ -387,8 +397,15 @@ ActiveRecord::Schema.define(version: 20160229072181) do
   add_index "spree_product_properties", ["product_id"], name: "index_product_properties_on_product_id"
   add_index "spree_product_properties", ["property_id"], name: "index_spree_product_properties_on_property_id"
 
+  create_table "spree_product_subscription_frequencies", force: :cascade do |t|
+    t.integer "product_id"
+    t.integer "subscription_frequency_id"
+  end
+
+  add_index "spree_product_subscription_frequencies", ["product_id"], name: "index_spree_product_subscription_frequencies_on_product_id"
+
   create_table "spree_products", force: :cascade do |t|
-    t.string   "name",                 default: "",   null: false
+    t.string   "name",                 default: "",    null: false
     t.text     "description"
     t.datetime "available_on"
     t.datetime "deleted_at"
@@ -397,14 +414,16 @@ ActiveRecord::Schema.define(version: 20160229072181) do
     t.string   "meta_keywords"
     t.integer  "tax_category_id"
     t.integer  "shipping_category_id"
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
+    t.datetime "created_at",                           null: false
+    t.datetime "updated_at",                           null: false
     t.boolean  "promotionable",        default: true
     t.string   "meta_title"
+    t.boolean  "is_subscribable",      default: false
   end
 
   add_index "spree_products", ["available_on"], name: "index_spree_products_on_available_on"
   add_index "spree_products", ["deleted_at"], name: "index_spree_products_on_deleted_at"
+  add_index "spree_products", ["is_subscribable"], name: "index_spree_products_on_is_subscribable"
   add_index "spree_products", ["name"], name: "index_spree_products_on_name"
   add_index "spree_products", ["shipping_category_id"], name: "index_spree_products_on_shipping_category_id"
   add_index "spree_products", ["slug"], name: "index_spree_products_on_slug", unique: true
@@ -817,6 +836,40 @@ ActiveRecord::Schema.define(version: 20160229072181) do
   add_index "spree_stores", ["code"], name: "index_spree_stores_on_code"
   add_index "spree_stores", ["default"], name: "index_spree_stores_on_default"
   add_index "spree_stores", ["url"], name: "index_spree_stores_on_url"
+
+  create_table "spree_subscription_frequencies", force: :cascade do |t|
+    t.string   "title"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+    t.integer  "months_count"
+  end
+
+  create_table "spree_subscriptions", force: :cascade do |t|
+    t.integer  "variant_id"
+    t.integer  "quantity"
+    t.integer  "parent_order_id"
+    t.integer  "ship_address_id"
+    t.integer  "bill_address_id"
+    t.datetime "last_occurrence_at"
+    t.datetime "cancelled_at"
+    t.decimal  "price",                     precision: 8, scale: 2
+    t.datetime "created_at",                                                        null: false
+    t.datetime "updated_at",                                                        null: false
+    t.boolean  "enabled",                                           default: false
+    t.integer  "subscription_frequency_id"
+    t.string   "number"
+    t.text     "cancellation_reasons"
+    t.integer  "source_id"
+    t.string   "source_type"
+    t.integer  "delivery_number"
+  end
+
+  add_index "spree_subscriptions", ["bill_address_id"], name: "index_spree_subscriptions_on_bill_address_id"
+  add_index "spree_subscriptions", ["cancelled_at"], name: "index_spree_subscriptions_on_cancelled_at"
+  add_index "spree_subscriptions", ["last_occurrence_at"], name: "index_spree_subscriptions_on_last_occurrence_at"
+  add_index "spree_subscriptions", ["parent_order_id"], name: "index_spree_subscriptions_on_parent_order_id"
+  add_index "spree_subscriptions", ["ship_address_id"], name: "index_spree_subscriptions_on_ship_address_id"
+  add_index "spree_subscriptions", ["variant_id"], name: "index_spree_subscriptions_on_variant_id"
 
   create_table "spree_tax_categories", force: :cascade do |t|
     t.string   "name"
